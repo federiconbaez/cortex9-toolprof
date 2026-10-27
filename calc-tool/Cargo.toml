@@ -20,3 +20,7 @@ path = "src/bin/calc-suite.rs"
 mcp-server-rs = { workspace = true }
 serde_json = "1"
 libc = "0.2"
+
+[dev-dependencies]
+toolprof = { path = "../toolprof" }
+cortex9-tracer = { workspace = true }
