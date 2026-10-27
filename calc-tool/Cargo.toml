@@ -1,0 +1,22 @@
+[package]
+name = "calc-tool"
+description = "Demo tool for toolprof: the `calc` evaluator of mcp-server-rs as a stdin/stdout process, plus its test-suite runner."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "calc-tool"
+path = "src/main.rs"
+
+[[bin]]
+name = "calc-suite"
+path = "src/bin/calc-suite.rs"
+
+[dependencies]
+mcp-server-rs = { workspace = true }
+serde_json = "1"
+libc = "0.2"

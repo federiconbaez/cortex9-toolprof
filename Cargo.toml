@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["toolprof", "toolprof-common"]
+members = ["toolprof", "toolprof-common", "calc-tool"]
 # The eBPF crate targets `bpfel-unknown-none` with nightly and has its own
 # workspace (see toolprof-ebpf/rust-toolchain.toml).
 exclude = ["toolprof-ebpf"]
