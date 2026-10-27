@@ -98,8 +98,10 @@ $B/toolprof diff -c calc-tool -p profile.json -i trace.jsonl   # compuerta offli
 ### Tests y verificación
 
 - 44 tests: 31 unitarios en `toolprof` (argspec, eventos, evaluación, síntesis seccomp y Landlock, ELF, import de Docker, métrica, decodificación), 2 de layout en `toolprof-common`, 3 de la suite, 7 de integración sin privilegios (`calc-tool/tests/enforce.rs`: perfiles armados a mano prueban SIGSYS, `EACCES` de Landlock, condición sobre `mmap`, condición de fd, modo `--errno` y que los probes sí escapan sin perfil) y 1 de pipeline completo con root (`calc-tool/tests/pipeline.rs`, `#[ignore]`, falla si no es root o si el kernel rechaza el programa).
+- Para correrlos: `cargo build --workspace --bins && cargo test --workspace --all-targets` (los tests de enforce ejecutan el binario `toolprof`, que `cargo test` no compila para otro paquete; si falta, fallan).
 - En la VM: los 44 pasan (el de pipeline con `sudo` como runner de cargo); el verificador aceptó el programa eBPF (nightly 1.101, bpf-linker 0.12.0).
-- CI (GitHub Actions): `check` (fmt, clippy `-D warnings`, tests sin privilegios, que incluyen enforcement real de seccomp y Landlock), `ebpf` (compila y sube el objeto) y `pipeline` (con `sudo`: test de pipeline y `scripts/measure.sh`, que sale con error si no se cumple el criterio).
+- CI (GitHub Actions): `check` (fmt, clippy `-D warnings`, build de los binarios, tests sin privilegios, que incluyen enforcement real de seccomp y Landlock), `ebpf` (compila y sube el objeto) y `pipeline` (con `sudo`: test de pipeline y `scripts/measure.sh`, que sale con error si no se cumple el criterio).
+- Primera corrida del CI en `main` ([run 40479733832](https://github.com/federiconbaez/cortex9-toolprof/actions/runs/40479733832)): `ebpf` y `pipeline` pasaron; en `ubuntu-latest` con kernel 6.17 (Azure) el pipeline cargó el programa con `sudo` y reprodujo los mismos números (4068 eventos, 24 syscalls, 92.13 % / 94.53 %, 55/55, hold-out 27/27, fuzzing 1000/1000). `check` falló porque `cargo test` no compila el binario `toolprof` que usan los tests de enforce de otro paquete; se corrigió agregando `cargo build --workspace --bins` al job (PR #1). Sólo se probó en runners x86_64.
 
 ### Qué no está probado / limitaciones
 
@@ -177,8 +179,10 @@ See the Spanish section for the exact commands (`trace`, `synth`, `run`, `surfac
 ### Tests and verification
 
 - 44 tests: 31 unit tests in `toolprof`, 2 layout tests in `toolprof-common`, 3 suite tests, 7 unprivileged integration tests (`calc-tool/tests/enforce.rs`: hand-built profiles prove SIGSYS, Landlock `EACCES`, an `mmap` argument condition, an fd condition, `--errno` mode, and that the probes do escape without a profile) and 1 full root pipeline test (`calc-tool/tests/pipeline.rs`, `#[ignore]`, fails when not root or when the kernel rejects the program).
+- To run them: `cargo build --workspace --bins && cargo test --workspace --all-targets` (the enforce tests execute the `toolprof` binary, which `cargo test` does not build for another package; if it is missing they fail).
 - On the VM all 44 pass (the pipeline one with `sudo` as cargo runner); the verifier accepted the eBPF program (nightly 1.101, bpf-linker 0.12.0).
-- CI (GitHub Actions): `check` (fmt, clippy `-D warnings`, unprivileged tests including real seccomp and Landlock enforcement), `ebpf` (builds and uploads the object) and `pipeline` (with `sudo`: pipeline test and `scripts/measure.sh`, which exits with an error if the criterion is not met).
+- CI (GitHub Actions): `check` (fmt, clippy `-D warnings`, binaries build, unprivileged tests including real seccomp and Landlock enforcement), `ebpf` (builds and uploads the object) and `pipeline` (with `sudo`: pipeline test and `scripts/measure.sh`, which exits with an error if the criterion is not met).
+- First CI run on `main` ([run 40479733832](https://github.com/federiconbaez/cortex9-toolprof/actions/runs/40479733832)): `ebpf` and `pipeline` passed; on `ubuntu-latest` with kernel 6.17 (Azure) the pipeline loaded the program with `sudo` and reproduced the same numbers (4068 events, 24 syscalls, 92.13 % / 94.53 %, 55/55, held-out 27/27, fuzzing 1000/1000). `check` failed because `cargo test` does not build the `toolprof` binary that another package's enforce tests run; fixed by adding `cargo build --workspace --bins` to the job (PR #1). Only x86_64 runners were tried.
 
 ### Not tested / limitations
 

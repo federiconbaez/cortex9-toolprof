@@ -34,6 +34,10 @@ jobs:
           rustfmt --edition 2021 --check toolprof-ebpf/src/main.rs
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Build binaries
+        # The enforce tests of calc-tool run the `toolprof` binary of another
+        # package; `cargo test` alone builds it only as a test harness.
+        run: cargo build --workspace --bins --locked
       - name: Test
         run: cargo test --workspace --all-targets --locked
 

@@ -16,13 +16,14 @@ pub fn calc_suite() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_calc-suite"))
 }
 
-/// The `toolprof` binary of the same build. `cargo test --workspace` builds
-/// it; a missing binary is a failure, not a skip.
+/// The `toolprof` binary of the same build profile. `cargo test` does not
+/// build binaries of other packages, so run `cargo build --workspace --bins`
+/// first (CI does); a missing binary is a failure, not a skip.
 pub fn toolprof() -> PathBuf {
     let p = calc_tool().with_file_name("toolprof");
     assert!(
         p.is_file(),
-        "{} not built: run `cargo test --workspace`",
+        "{} not built: run `cargo build --workspace --bins` before the tests",
         p.display()
     );
     p
