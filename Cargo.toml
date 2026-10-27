@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = ["toolprof-common"]
+# The eBPF crate targets `bpfel-unknown-none` with nightly and has its own
+# workspace (see toolprof-ebpf/rust-toolchain.toml).
+exclude = ["toolprof-ebpf"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["Federico Nicolas Báez Rizzo"]
+repository = "https://github.com/federiconbaez/cortex9-toolprof"
+
+[workspace.dependencies]
+# Reused as-is from the published tracer (pinned): event layout, decoding,
+# JSON-lines formatting and the syscall tables.
+cortex9-tracer = { git = "https://github.com/federiconbaez/cortex9-ebpf-tracer", rev = "c6732e657b9e4745324755effbefb7d85646728b" }
+cortex9-tracer-common = { git = "https://github.com/federiconbaez/cortex9-ebpf-tracer", rev = "c6732e657b9e4745324755effbefb7d85646728b" }
+# The `calc` evaluator of the demo tool (pinned).
+mcp-server-rs = { git = "https://github.com/federiconbaez/mcp-server-rs", rev = "9da13ddb13a4f33870873ce1fe8d995a3819f1a8" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

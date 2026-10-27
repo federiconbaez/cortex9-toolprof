@@ -1,0 +1,11 @@
+[package]
+name = "toolprof-common"
+description = "Records shared by the toolprof eBPF program and its loader."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+cortex9-tracer-common = { workspace = true }
