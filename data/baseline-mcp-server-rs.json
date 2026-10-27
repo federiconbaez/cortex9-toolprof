@@ -1,0 +1,1 @@
+["read","write","exit","exit_group","brk","mmap","munmap","mremap","madvise","futex","sigaltstack","rt_sigreturn","rt_sigprocmask"]

@@ -10,8 +10,10 @@
 //! Everything except [`trace`] is plain Rust testable without privileges.
 
 pub mod argspec;
+pub mod docker;
 pub mod elf;
 pub mod eval;
 pub mod event;
 pub mod profile;
+pub mod surface;
 pub mod synth;
