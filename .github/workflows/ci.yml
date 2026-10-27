@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  BPF_LINKER_VERSION: v0.12.0
+
+jobs:
+  check:
+    name: fmt · clippy · test (unprivileged, Landlock + seccomp enforcement)
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Kernel and LSMs
+        run: |
+          uname -r
+          cat /sys/kernel/security/lsm || true
+      - name: Format
+        run: |
+          cargo fmt --all -- --check
+          rustfmt --edition 2021 --check toolprof-ebpf/src/main.rs
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test --workspace --all-targets --locked
+
+  ebpf:
+    name: build eBPF (nightly + bpf-linker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+      - name: Install bpf-linker
+        run: |
+          curl -sSfL -o /tmp/bpf-linker.tar.zst \
+            "https://github.com/aya-rs/bpf-linker/releases/download/${BPF_LINKER_VERSION}/bpf-linker-x86_64-unknown-linux-musl.tar.zst"
+          mkdir -p "$HOME/.local/bin"
+          tar --zstd -xf /tmp/bpf-linker.tar.zst -C "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Build eBPF object
+        working-directory: toolprof-ebpf
+        run: |
+          bpf-linker --version
+          cargo build --release --locked
+          ls -l target/bpfel-unknown-none/release/toolprof-ebpf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toolprof-ebpf
+          path: toolprof-ebpf/target/bpfel-unknown-none/release/toolprof-ebpf
+          if-no-files-found: error
+
+  pipeline:
+    name: trace (sudo, eBPF) → synth → enforce → measure
+    runs-on: ubuntu-latest
+    needs: ebpf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: toolprof-ebpf
+          path: ebpf-obj
+      - name: Kernel
+        run: uname -r
+      - name: Build (object embedded)
+        run: |
+          export TOOLPROF_EBPF_OBJ="$PWD/ebpf-obj/toolprof-ebpf"
+          cargo build --release --locked --workspace
+      - name: Pipeline test (root; fails if BPF cannot load)
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER: sudo -E
+        run: |
+          export TOOLPROF_EBPF_OBJ="$PWD/ebpf-obj/toolprof-ebpf"
+          cargo test --release --locked -p calc-tool --test pipeline -- --ignored
+      - name: Measurement (scripts/measure.sh)
+        run: |
+          export TOOLPROF_EBPF_OBJ="$PWD/ebpf-obj/toolprof-ebpf"
+          scripts/measure.sh "$PWD/out"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: measurement
+          path: out/
+          if-no-files-found: warn
