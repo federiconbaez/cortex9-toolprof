@@ -17,3 +17,8 @@ pub mod event;
 pub mod profile;
 pub mod surface;
 pub mod synth;
+
+#[cfg(target_os = "linux")]
+pub mod enforce;
+#[cfg(target_os = "linux")]
+pub mod trace;
