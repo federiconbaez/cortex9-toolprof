@@ -1,0 +1,31 @@
+[package]
+name = "toolprof"
+description = "Per-tool seccomp (with argument conditions) + Landlock profiles synthesized from eBPF syscall traces."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme = "../README.md"
+keywords = ["seccomp", "landlock", "ebpf", "sandbox", "linux"]
+categories = ["command-line-utilities", "os::linux-apis"]
+publish = false
+
+[lib]
+name = "toolprof"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+libc = "0.2"
+cortex9-tracer = { workspace = true }
+toolprof-common = { path = "../toolprof-common" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+seccompiler = "0.5"
+landlock = "0.4"
+aya = "0.14"
+tokio = { version = "1", features = ["macros", "rt", "net", "time"] }
